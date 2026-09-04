@@ -1,41 +1,55 @@
 # evals —— 本仓库唯一有长期价值的资产
 
 代码会被重写,配置会过时,harness 会换。
-**但一份真实的、带标注的技师问题集,换任何模型任何框架都还能用。**
+**但一份带自动判分的任务集,换任何模型任何框架都还能用。**
 
-目标 100 条,20 条起步。
+目标 50 条,12 条起步(`tasks.jsonl` 已带)。
 
 ---
 
-## 铁律:不要自己编题
+## 铁律:任务必须能自动判分
 
-自己编的问题会不自觉地写成「模型容易答对的样子」,测出来的数字是假的。
+「答得好不好」靠人看是不可持续的。每条任务都要能用文件内容、命令输出或回答里的关键字机器判定过没过。判不了的先别加。
 
-去翻工单、问服务部门、看历史聊天记录、录音转写。**要真实技师的原话**,包括:
-- 口语化的、不完整的问法
-- 错别字和型号简写
-- 一次问两件事的
-- 前提就错了的(这类最能暴露问题)
+真实工作里的任务(整理日志、改脚本、算表格)比人造题好。不要把题写成「模型容易答对的样子」。
 
 ---
 
 ## 格式
 
-`questions.jsonl`,一行一条 JSON:
+`tasks.jsonl`,一行一条 JSON:
 
 ```json
-{"id": "q001", "question": "3系列外机不启动 报E7", "expected_sources": ["RXYQ-T_manual.pdf#p42"], "expected_points": ["E7 = 风扇电机故障", "先查风扇电机接线"], "category": "fault-code", "difficulty": "easy", "notes": "技师工单 #12345 原话"}
+{"id": "t07", "task": "buggy.py 运行结果不对,应该打印 10。把它修好,修完自己跑一遍确认",
+ "setup": {"files": {"buggy.py": "..."}},
+ "checks": [{"type": "cmd", "cmd": "python3 buggy.py", "stdout_contains": "10"}],
+ "category": "multi-step", "difficulty": "medium", "notes": "读 → 改 → 跑 → 看输出"}
 ```
 
 | 字段 | 必填 | 说明 |
 |---|---|---|
 | `id` | ✅ | 唯一标识 |
-| `question` | ✅ | **技师原话,不要润色** |
-| `expected_sources` | | 正确答案应该引用哪些文档 → 用来判环 4 |
-| `expected_points` | | 答案必须包含的要点 → 用来判端到端质量 |
-| `category` | | fault-code / install / maintenance / spec / troubleshooting |
+| `task` | ✅ | 发给 agent 的原话 |
+| `setup.files` | | 运行前写进沙箱工作目录的文件,`{"相对路径": "内容"}` |
+| `checks` | ✅ | 判分规则,全部通过才算过。类型见下 |
+| `category` | | single-step / multi-step / impossible / false-premise |
 | `difficulty` | | easy / medium / hard |
-| `notes` | | 出处,方便回溯 |
+| `notes` | | 这条在测什么 |
+
+### checks 类型
+
+| type | 字段 | 判定 |
+|---|---|---|
+| `file_exists` | `path` | 文件存在 |
+| `file_absent` | `path` | 文件不存在(防止它编一个出来) |
+| `file_equals` | `path`, `value` | 文件内容 strip 后完全相等 |
+| `file_contains` | `path`, `value` | 文件内容包含子串 |
+| `file_not_contains` | `path`, `value` | 文件内容不包含子串 |
+| `cmd` | `cmd`, 可选 `stdout_contains` | 在工作目录跑命令,退出码 0(且输出含子串) |
+| `answer_contains` | `any: [...]` | 最终回答包含任一子串(不分大小写) |
+| `manual` | `note` | 自动判不了,标记给人看。不影响自动通过与否 |
+
+每次运行都在**独立的空目录**里跑,setup 里没写的文件就不存在。
 
 ---
 
@@ -43,17 +57,17 @@
 
 | 类型 | 占比 | 为什么 |
 |---|---|---|
-| 单跳(一次检索能答) | 40% | 基线,测最基本的链路 |
-| **多跳(需要两次以上检索)** | **40%** | **测 agent 循环,这是重点** |
-| 无解(文档里没有) | 10% | 测它会不会编。会编就是大问题 |
+| 单步(一次工具调用能完成) | 40% | 基线,测最基本的链路 |
+| **多步(需要看结果再决定)** | **40%** | **测 agent 循环,这是重点** |
+| 无解(要的东西不存在) | 10% | 测它会不会编。会编就是大问题 |
 | 前提错误 | 10% | 测它会不会盲从 |
 
-多跳题占比要高 —— 因为单跳题用 RAG 流水线就够了,根本测不出 agent 的价值,也测不出多轮调用的累积失败率。
+多步题占比要高 —— 单步题一个脚本就能做,测不出 agent 的价值,也测不出多轮调用的累积失败率。
 
 ---
 
 ## 标注纪律
 
-- `expected_sources` 要精确到页或 chunk,否则判不了环 4
-- `expected_points` 写要点不写完整答案,措辞可以不同但意思必须在
-- 无解题的 `expected_points` 写 `["应明确说明文档中没有相关信息"]`
+- `checks` 要卡到位:t08 那种「把 worker.log 也写进去」的常见错法要有专门的 `file_not_contains`
+- 无解题必须配 `file_absent`,否则它自己建个文件就过了
+- 前提错误题必须配 `file_equals` 原内容,盲改一律算失败

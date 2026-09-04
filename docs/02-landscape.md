@@ -25,7 +25,7 @@
 ### 1. 编码 agent vs 通用 agent
 表里绝大多数假设你的工作对象是一个 git 仓库。**只有 Goose 明确定位为通用**——研究、自动化、数据分析和写代码并列。
 
-HVAC 知识问答不是仓库任务,这一条基本把选择缩到 Goose 和 OpenHands。
+我们要测的是「本地模型能不能撑住一个真实的工具循环」,不想被编码 IDE 的假设绑死,这一条基本把选择缩到 Goose 和 OpenHands。
 
 ### 2. 自主度与沙箱(= 信任层级)
 - **OpenHands** 最激进:Docker 沙箱里无人值守跑完整任务
@@ -47,9 +47,9 @@ Goose 已转到 Linux Foundation 的 Agentic AI Foundation(AAIF),Apache 2.0,不�
 
 ## 决定:主选 Goose
 
-五条全中:
+2026-09-04 核对:仓库在 `aaif-goose/goose`,Apache 2.0,~54k 星,v1.49.0(9/3 发布),Ollama 是一等 provider。五条全中:
 1. Rust 写的 — 读源码/fork 门槛低
-2. MCP 原生 — domain-mcp 直接挂
+2. MCP 原生 — 内置 developer extension 开箱能用,以后业务 MCP 直接挂
 3. 通用而非只做代码 — 匹配知识问答场景
 4. Ollama 离线可用 — 匹配 on-prem
 5. 基金会托管,厂商中立 — 可长期押注
@@ -70,7 +70,7 @@ Goose 已转到 Linux Foundation 的 Agentic AI Foundation(AAIF),Apache 2.0,不�
 **Code mode**
 四种预设模式之一。它改变了工具触达模型的方式:不是把工具暴露成一个个 function call,而是**生成一个 TypeScript SDK 让模型直接写程序调用**——本来五个来回的调用序列变成一次完成。
 
-→ 直接针对本仓库的核心风险:多轮工具调用的累积失败率从 `0.95^N` 变回接近 `0.95`。**如果基线测试结果很差,这是第一个该试的对策。**
+→ 直接针对本仓库的核心风险:多轮工具调用的累积失败率从 `0.95^N` 变回接近 `0.95`。**如果基线测试结果很差,这是第一个该试的对策。基线跑通之前不碰。**
 
 (另外两种模式:Standard 完整工具集;Minimal 只留 bash + str_replace_editor,专门用来 benchmark 模型裸能力。)
 

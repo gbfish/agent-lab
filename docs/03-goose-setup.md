@@ -1,136 +1,123 @@
 # 03 · Goose 安装与配置
 
-> ⚠️ 项目已从 `block/goose` 迁到 Linux Foundation 的 `aaif-goose/goose`。
-> 搜到的旧链接会有一段时间失效,认准新仓库。文档站也在迁移中。
+> 项目已从 `block/goose` 迁到 Linux Foundation 的 `aaif-goose/goose`(2026-04)。
+> 搜到的旧链接会有一段时间失效,认准新仓库。本文按 **goose 1.49.0** 核对过。
 
 ---
 
 ## 1. 安装
 
 ```bash
-# macOS / Linux
+brew install block-goose-cli          # Homebrew formula 名还没改
+# 或
 curl -fsSL https://getgoose.ai/install.sh | bash
 
-# Windows PowerShell
-irm https://getgoose.ai/install.ps1 | iex
+goose --version                        # 1.49.0
+goose info                             # 看配置 / session 库 / 日志在哪
 ```
 
-桌面版和 CLI 都有,全平台。**建议 CLI 起步** —— 我们要看的是日志,GUI 反而挡视线。
+桌面版和 CLI 都有。**用 CLI** —— 我们要看的是日志,GUI 反而挡视线。
 
 ---
 
 ## 2. 准备 Ollama
 
-先确保 Ollama 在跑:
+### ⚠️ 第一个坑:上下文长度
+
+**Ollama 默认给模型 4096 上下文,而且超了就静默截断。** Goose 的系统提示 + 工具定义本身就两千多 token,再加任务和几轮工具结果就超了。超了之后模型看不到工具定义 —— 表现出来就是「不调用工具」,会被误判成环 1,把整张失败分布表污染掉。
+
+本机 Ollama 是 `/Applications/Ollama.app` 跑的菜单栏程序,改环境变量要重启它。**更干净的办法是建一个带 `num_ctx` 的模型变体**,不动服务端,名字里就写明了上下文:
 
 ```bash
-ollama serve            # 通常已经作为服务在跑
-ollama list             # 看已有模型
-ollama pull <model>     # 拉一个 tool calling 强的
+printf 'FROM qwen3:8b\nPARAMETER num_ctx 32768\n' > /tmp/Modelfile
+ollama create qwen3:8b-32k -f /tmp/Modelfile
 ```
 
-### ⚠️ 选模型:这里有个大坑
-
-> **7B–14B 这个区间的本地模型,最常被报告的问题是把 tool call 当成裸文本或畸形 XML 吐出来,而不是正确的结构化调用。这会直接让 agent 循环崩掉——不是「答得差一点」,是根本转不动。**
-
-所以:
-
-- ❌ 不要挑「能塞进显存的最小的」
-- ✅ 挑硬件能跑的、偏 coder 方向的、尽量大的
-- ✅ 装完第一件事就是测这个,别等跑业务逻辑再发现
-
-Qwen3:14b 正好卡在风险区间的上沿——**必须实测,不能假设**。测法见 `05-eval-plan.md`。
-
----
-
-## 3. 配置
-
+验证(跑过一次之后看实际加载的上下文):
 ```bash
-goose configure
+curl -s localhost:11434/api/ps | python3 -c 'import sys,json;[print(m["name"],m["context_length"]) for m in json.load(sys.stdin)["models"]]'
 ```
 
-交互式向导依次问:
+`run_eval.py` 第一次运行后会自动查这个,低于 16384 直接退出。
 
-| 步骤 | 选什么 |
-|---|---|
-| 1. 遥测数据上报 | **否**(厂内数据,别开) |
-| 2. Provider | **Ollama (Local open source models)** |
-| 3. Host | 默认 `localhost:11434`,是 Ollama 标准地址。除非跑在别的机器上,不用改 |
-| 4. Model | 填你 `ollama list` 里的模型名 |
-| 5. Extensions | 先跳过,下一步单独配 |
+### 选模型:本机是 M3 Pro 18GB
 
-向导会自动发一个测试调用验证配置通不通。
+| 模型 | 能不能跑 | 社区反馈的工具调用表现 |
+|---|---|---|
+| `qwen3:8b`(已装,Q4_K_M 5.2GB) | 快 | 5 个以内工具基本稳;本仓库冒烟 3/3 通过 |
+| `qwen3:14b`(Q4 约 9GB) | 能,慢一些 | 单卡消费级机器的常规推荐,少丢调用 |
+| `qwen3:30b-a3b` | **塞不下** | — |
 
-### 验证
-
-```bash
-goose session
-# 随便说句话,看它能不能真的执行代码而不只是描述代码
-```
-
-**判据:它是「说」还是「做」。** 如果只是输出一段代码告诉你自己去跑,那工具没接通。
-
-### 重新配置
+> 7B–14B 区间最常被报告的问题是把 tool call 当成裸文本或畸形 XML 吐出来。
+> Qwen3 在这方面是社区里最稳的一档。**但必须实测,不能假设。**
 
 ```bash
-goose configure    # 再跑一次,可切 provider/模型、增删 extension、改偏好
+ollama pull qwen3:14b
+printf 'FROM qwen3:14b\nPARAMETER num_ctx 32768\n' > /tmp/Modelfile
+ollama create qwen3:14b-32k -f /tmp/Modelfile
 ```
 
 ---
 
-## 4. 挂上 domain-mcp
+## 3. 不需要 `goose configure`
 
-配置模板见 `configs/goose.example.yaml`。核心部分:
+实验里所有参数都由 `run_eval.py` 逐次通过命令行传给 `goose run`:
 
-```yaml
-extensions:
-  - type: stdio
-    name: domain-docs
-    cmd: node
-    args:
-      - /absolute/path/to/domain-mcp/dist/server.js
-    timeout: 300
-    description: "HVAC 技术文档检索"
-    available_tools:
-      - search_hvac_docs        # ← 只暴露这一个
+```bash
+goose run \
+  --provider ollama --model qwen3:8b-32k \
+  --no-profile \                       # 不加载你的默认 extension,只用下面指定的
+  --with-builtin developer \           # shell + 文件读写
+  --output-format stream-json \        # 事件流,机器可读
+  --max-turns 20 \                     # 环 6 保险
+  --max-tool-repetitions 3 \           # 连续相同调用上限,环 6 保险
+  --name <session-name> \
+  -t "任务原话"
 ```
 
-### 三个要点
+不用配置文件的原因:**配置文件是全局状态,会让两次运行之间悄悄多出一个变量。** 每次运行的完整命令行都记在 `record.json` 里,可复现。
 
-**`available_tools` 是最简单有效的权限控制。**
-调试阶段只放检索工具,确认稳定了再放写操作。这比在提示词里写「不要修改文件」可靠一万倍——提示词是建议,这是物理隔离。
-
-**`timeout` 给足。**
-检索 + 重排序可能慢,默认值容易误杀。300 秒起步,稳定后再调紧。
-
-**路径必须是绝对路径。**
-`stdio` 型 extension 是 Goose 直接 spawn 的子进程,工作目录不一定是你想的那个。
+想交互式玩的时候再 `goose configure`(遥测那一项选否)。
 
 ---
 
-## 5. 常用命令
+## 4. 冒烟测试
 
 ```bash
-goose session                              # 开一个交互会话
-goose session start --working-dir /path    # 指定工作目录
+mkdir -p /tmp/goose-smoke && cd /tmp/goose-smoke
+goose run --provider ollama --model qwen3:8b-32k --no-profile \
+  --with-builtin developer --no-session \
+  -t "在当前目录创建 hello.txt,内容写 hello"
+ls
+```
+
+**判据:它是「说」还是「做」。** 目录里出现 `hello.txt` 才算接通。只输出一段代码让你自己跑 = 工具没接通。
+
+2026-09-04 本机实测:`qwen3:8b` 35 秒完成,1 次 `write` 调用。
+
+---
+
+## 5. 拿 trajectory
+
+两个来源,`run_eval.py` 都存:
+
+| 来源 | 内容 | 用途 |
+|---|---|---|
+| stdout(`--output-format stream-json`) | 逐 token 事件流,`thinking` / `text` / `toolRequest` / `toolResponse`,最后一条 `complete` 带 token 数 | 看时序、看它卡在哪 |
+| `goose session export --name <n> --format json` | 干净的完整对话 `conversation[]`,同样的四种 content,外加 usage / model_config | **分析用这个** |
+
+`toolRequest.toolCall.status` 是 `"error"` 就说明模型吐的调用 goose 没解析动 —— 这是环 2 最直接的证据。
+
+---
+
+## 6. 常用命令
+
+```bash
 goose session list                         # 列出所有会话
-goose session resume <session-id>          # 恢复上次的
-goose configure                            # 改配置
+goose session export --name X --format json -o X.json
+goose session remove                       # 交互式删。1.49 的 --name / -r 非交互删有 bug("not connected")
+goose info -v                              # 看当前生效的配置和 extension
 ```
-
-调试时加 verbose/debug 标志导出完整 trajectory —— 具体标志名以 `goose --help` 为准,版本间有变化。
-
----
-
-## 6. Recipe(跑通之后再做)
-
-Recipe 是 YAML,打包指令 + 扩展 + 参数,把一次性会话变成可重复流程。
-
-**别手写。** 正常跑一个 session,结果满意了点 "Create Recipe",Goose 自己分析对话、提取意图和用到的扩展、预填表单。
-
-对本项目的用法:「诊断某型号压缩机故障」这类技师高频任务,调好一次存成 recipe,以后一键复用。也是以后产品化时的雏形。
-
-Recipe 可以从当前目录、`GOOSE_RECIPE_PATH` 环境变量指定的目录,或 GitHub 仓库(需要 `gh` 已认证)加载。
 
 ---
 
@@ -138,9 +125,10 @@ Recipe 可以从当前目录、`GOOSE_RECIPE_PATH` 环境变量指定的目录,�
 
 | 症状 | 检查 |
 |---|---|
-| Extension 起不来 | 命令在 PATH 里吗?路径是绝对的吗?手动跑一遍那条 cmd |
-| 模型不调工具 | 工具描述太模糊?或者模型 tool calling 能力不够 → 见 `04-failure-modes.md` 第 1 环 |
+| 模型不调工具 | **先查上下文**(`/api/ps` 的 `context_length`)。再看工具描述、模型能力 → `04-failure-modes.md` 环 1 |
+| 输出里有 `<tool_call>` 之类裸文本 | 环 2,模型格式能力不够 |
 | 连不上 Ollama | `curl localhost:11434/api/tags` 通不通 |
-| 跑到中途忘了目标 | 上下文溢出 → 第 7 环 |
+| 跑到中途忘了目标 | 上下文溢出 → 环 7 |
+| `goose run` 慢 | 14b 在这台机器上一次多步任务 2–5 分钟正常,`--timeout` 给足 |
 
-**遇到任何问题,先看 trajectory,不要看界面渲染后的文字。**
+**遇到任何问题,先看 session.json,不要看界面渲染后的文字。**

@@ -21,7 +21,7 @@
 **这是本仓库要测的核心指标。** 小模型常见的失败是把调用吐成裸文本或畸形 XML,导致循环直接崩掉。
 
 ### MCP(Model Context Protocol)
-把工具标准化描述出来的开放协议。写一次 MCP server,任何支持 MCP 的 harness 都能用。`domain-mcp` 就是一个 MCP server。
+把工具标准化描述出来的开放协议。写一次 MCP server,任何支持 MCP 的 harness 都能用。Goose 的每个 extension 底层都是 MCP server,包括内置的 `developer`。
 
 ### Context(上下文)
 每次发给模型的全部内容:系统提示 + 历史消息 + 工具定义 + 工具返回结果。它有长度上限,而且**本地模型的有效上下文往往远小于标称值**——标称 128k 不代表第 100k 个 token 还有用。
@@ -38,7 +38,7 @@
 | **模型** | 否 | Qwen3、DeepSeek-V4 |
 | **Harness / Runtime** | 否,配置它 | Goose、OpenHands、dsh、OpenCode |
 | **Framework** | 是,调它的 API | LangGraph、CrewAI |
-| **你的应用** | 是 | domain-mcp + 业务逻辑 |
+| **你的应用** | 是 | 任务集 + 判分规则 + 以后的业务工具 |
 
 ### Harness(马具 / 夹具)
 词源有两个:测试里的 test harness(把被测组件架起来喂输入收输出),和 ML 评测里的 evaluation harness(lm-evaluation-harness)。字面意思是马具——**模型是马,harness 是让它能真的拉动东西的那套皮带**。
@@ -71,13 +71,13 @@ Goose 里「工具」的叫法,底层就是 MCP server。
 类型:
 | type | 说明 |
 |---|---|
-| `stdio` | 标准输入输出启动的外部进程(**domain-mcp 属于这种**) |
-| `builtin` | Goose 自带 |
+| `stdio` | 标准输入输出启动的外部进程(以后接业务 MCP 用这种) |
+| `builtin` | Goose 自带(**`developer` 就是,本仓库只用这个**) |
 | `platform` | 跑在 agent 进程内 |
 | `streamable_http` | 远程 MCP,HTTP 端点 |
 | `inline_python` | 内嵌 Python,用 uvx 执行 |
 
-`available_tools` 字段可以限定只暴露某几个工具——**最简单有效的权限控制**。
+`available_tools` 字段可以限定只暴露某几个工具;`goose run --no-profile` 则完全不加载默认 extension——**最简单有效的权限控制**。
 
 ### Session(会话)
 一次任务的完整上下文。可列出、恢复(`goose session resume <id>`)、指定工作目录。

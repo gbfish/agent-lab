@@ -1,14 +1,9 @@
-# 原始 trajectory —— 涨得快,且可能含厂内文档片段
+# 原始 trajectory + 导出的 session —— 涨得快
 runs/*
 !runs/.gitkeep
 
-# 真实题目集含厂内信息,按需决定是否提交
-# 如果仓库是私有的,把下面这行注释掉
-evals/questions.jsonl
-
-# 本地配置(含绝对路径和可能的凭据)
+# 本地配置副本(含绝对路径和可能的凭据)
 configs/goose.yaml
-configs/dsh.yaml
 .env
 
 # Python
