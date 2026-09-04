@@ -45,7 +45,7 @@ curl -s localhost:11434/api/ps | python3 -c 'import sys,json;[print(m["name"],m[
 | 模型 | 能不能跑 | 社区反馈的工具调用表现 |
 |---|---|---|
 | `qwen3:8b`(已装,Q4_K_M 5.2GB) | 快 | 5 个以内工具基本稳;本仓库冒烟 3/3 通过 |
-| `qwen3:14b`(Q4 约 9GB) | 能,慢一些 | 单卡消费级机器的常规推荐,少丢调用 |
+| `qwen3:14b`(Q4 9.3GB) | 能,**上下文只能给 16k**(32k 会溢到 CPU,0.1 tok/s) | 单卡消费级机器的常规推荐;本仓库 t07 一次通过,240s |
 | `qwen3:30b-a3b` | **塞不下** | — |
 
 > 7B–14B 区间最常被报告的问题是把 tool call 当成裸文本或畸形 XML 吐出来。
@@ -53,9 +53,10 @@ curl -s localhost:11434/api/ps | python3 -c 'import sys,json;[print(m["name"],m[
 
 ```bash
 ollama pull qwen3:14b
-printf 'FROM qwen3:14b\nPARAMETER num_ctx 32768\n' > /tmp/Modelfile
-ollama create qwen3:14b-32k -f /tmp/Modelfile
+ollama create qwen3:14b-16k -f configs/Modelfile.qwen3-14b-16k   # 16k,不是 32k,见 configs/README.md
 ```
+
+验证放置:`/api/ps` 里 `size_vram` 必须等于 `size`,否则就是溢到 CPU 了,速度会掉一百倍。
 
 ---
 

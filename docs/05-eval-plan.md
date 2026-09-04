@@ -41,10 +41,10 @@
 ### 第二步:跑
 
 ```bash
-python3 scripts/run_eval.py --model qwen3:14b-32k --repeat 3 --tag baseline
+python3 scripts/run_eval.py --model qwen3:14b-16k --repeat 3 --tag baseline
 ```
 
-`--repeat 3` 是因为同一个任务跑三遍结果可能不同 —— **要看的是稳定性,不是单次表现**。12 题 × 3 遍 = 36 次,14b 在本机大约 1 小时。
+`--repeat 3` 是因为同一个任务跑三遍结果可能不同 —— **要看的是稳定性,不是单次表现**。12 题 × 3 遍 = 36 次,14b 在本机 1–2 小时(t07 一次 240s)。
 
 每次运行的产物在 `runs/<日期_时间>/<tid>_r<n>/`:`record.json`(命令、原始 stdout/stderr、判分)、`session.json`(完整对话)、`work/`(沙箱目录,事后可以进去看它到底改了什么)。
 
@@ -98,7 +98,7 @@ python3 scripts/analyze.py runs/<日期_时间>/ --verbose
 |---|---|---|
 | Day 1 | 装 Goose,配 Ollama,跑通 hello world | ✅ 2026-09-04 |
 | Day 2 | 12 条任务集,runner + analyzer 跑通 | ✅ 2026-09-04(3 题冒烟 3/3) |
-| Day 3 | 拉 qwen3:14b,跑 `--repeat 3` 基线 | |
+| Day 3 | 拉 qwen3:14b,跑 `--repeat 3` 基线 | 🔄 2026-09-04 启动 |
 | Day 4 | `analyze.py` + 手工读 10 条 trajectory | |
 | Day 5 | 写结论到 `notes/findings.md`,走决策树 | |
 | 之后 | 任务集扩到 50 条;把跑得最好的流程存成 recipe | |

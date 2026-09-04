@@ -12,7 +12,7 @@ Read `docs/` in numeric order before changing anything; `docs/04-failure-modes.m
 
 - Machine: Apple M3 Pro, 18 GB unified memory. `qwen3:14b` is the largest model that fits; 30B-class does not.
 - Goose 1.49.0 installed via `brew install block-goose-cli`. No `~/.config/goose/config.yaml` exists and none is needed: every run passes `--provider`, `--model`, `--no-profile`, `--with-builtin` on the command line.
-- Ollama runs as the macOS app. Goose does not set `num_ctx`, so Ollama loads models at its 4096 default and silently truncates. Use the `-32k` model variants built from `configs/Modelfile.*` (`ollama create qwen3:8b-32k -f configs/Modelfile.qwen3-8b-32k`). The runner checks `/api/ps` after the first run and aborts below 16384.
+- Ollama runs as the macOS app. Goose does not set `num_ctx`, so Ollama loads models at its 4096 default and silently truncates. Use the model variants built from `configs/Modelfile.*` (`ollama create qwen3:8b-32k -f configs/Modelfile.qwen3-8b-32k`). qwen3:14b only fits with 16k context on this machine (`qwen3:14b-16k`); at 32k it spills 2 GB to CPU and generation drops to 0.1 tok/s. The runner checks `/api/ps` after the first run and aborts below 16384.
 - `goose session remove --name` / `-r` fail non-interactively in 1.49 ("not connected"); sessions from runs accumulate in Goose's SQLite DB. Clean up interactively with `goose session remove`.
 
 ## Commands
@@ -21,7 +21,7 @@ No build step, no test suite, no dependencies beyond Python 3.10+ stdlib.
 
 ```bash
 # Baseline run: writes runs/<YYYY-MM-DD_HHMMSS>/{_meta.json, <tid>_r<n>/{record.json, session.json, work/}}
-python3 scripts/run_eval.py --model qwen3:14b-32k --repeat 3 --tag "baseline"
+python3 scripts/run_eval.py --model qwen3:14b-16k --repeat 3 --tag "baseline"
 python3 scripts/run_eval.py --model qwen3:8b-32k --only t01,t07 --repeat 1   # subset
 python3 scripts/run_eval.py --model qwen3:8b-32k --system "..." --tag "system=..."  # prompt-engineering experiment
 

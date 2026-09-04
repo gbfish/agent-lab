@@ -11,5 +11,7 @@
 
 ```bash
 ollama create qwen3:8b-32k  -f configs/Modelfile.qwen3-8b-32k
-ollama create qwen3:14b-32k -f configs/Modelfile.qwen3-14b-32k
+ollama create qwen3:14b-16k -f configs/Modelfile.qwen3-14b-16k
 ```
+
+2026-09-04 实测(M3 Pro 18GB):14b 配 32k 上下文要 15GB,有 2GB 溢到 CPU,生成掉到 0.1 tok/s,不可用。配 16k 是 11.7GB,全在 GPU,13.5 tok/s。**这台机器上 14b 只能用 16k。**
