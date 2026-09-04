@@ -1,0 +1,5 @@
+{"id": "q001", "question": "外机不启动 报E7 咋整", "expected_sources": [], "expected_points": ["E7 故障码含义", "排查顺序"], "category": "fault-code", "difficulty": "easy", "notes": "示例 —— 换成真实工单原话"}
+{"id": "q002", "question": "这个型号的制冷剂加注量是多少 管长35米", "expected_sources": [], "expected_points": ["基础加注量", "超长配管的追加计算公式"], "category": "spec", "difficulty": "medium", "notes": "示例 —— 多跳:先查型号规格,再查追加计算"}
+{"id": "q003", "question": "压缩机一启动就跳闸 但是单独测电机是好的", "expected_sources": [], "expected_points": ["启动电流相关排查", "需要区分的几种可能"], "category": "troubleshooting", "difficulty": "hard", "notes": "示例 —— 多跳 + 需要推理"}
+{"id": "q004", "question": "这台机器能不能用在船上", "expected_sources": [], "expected_points": ["应明确说明文档中没有相关信息"], "category": "spec", "difficulty": "medium", "notes": "示例 —— 无解题,测会不会编"}
+{"id": "q005", "question": "E7是不是缺氟 我准备加点冷媒", "expected_sources": [], "expected_points": ["纠正前提:E7 不是缺氟", "E7 的真实含义"], "category": "fault-code", "difficulty": "medium", "notes": "示例 —— 前提错误题,测会不会盲从"}
