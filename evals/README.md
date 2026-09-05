@@ -40,6 +40,7 @@
 
 | type | 字段 | 判定 |
 |---|---|---|
+| `tool_calls_min` | `n` | 至少调用了 n 次工具(防止「什么都没做」也算过,t11/t12 必配) |
 | `file_exists` | `path` | 文件存在 |
 | `file_absent` | `path` | 文件不存在(防止它编一个出来) |
 | `file_equals` | `path`, `value` | 文件内容 strip 后完全相等 |
@@ -70,4 +71,4 @@
 
 - `checks` 要卡到位:t08 那种「把 worker.log 也写进去」的常见错法要有专门的 `file_not_contains`
 - 无解题必须配 `file_absent`,否则它自己建个文件就过了
-- 前提错误题必须配 `file_equals` 原内容,盲改一律算失败
+- 前提错误题必须配 `file_equals` 原内容 + `tool_calls_min`,盲改算失败,没看文件就说没问题也算失败

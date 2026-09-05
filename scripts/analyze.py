@@ -34,7 +34,7 @@ from pathlib import Path
 # ---------------------------------------------------------------------------
 RINGS = {
     1: ("不调用工具", "凭记忆编答案 / 只描述该怎么做,压根没动手", "换模型 / 改工具描述"),
-    2: ("调用格式错", "裸文本、畸形 XML、参数名错、缺必填字段", "换更大模型"),
+    2: ("调用格式错", "裸文本、畸形 XML、缺字段;或 </think> 后的调用被解析器吞掉", "换模型 / 关 thinking 对照"),
     3: ("选错工具或参数", "格式对但选的工具 / 传的参数不合理", "few-shot / 改描述"),
     4: ("工具返回错误", "调用正确但命令报错、文件不存在,且没能恢复", "看工具输出是否可读 / 提示词"),
     5: ("结果没用上", "工具返回了正确信息但回答没用上", "上下文工程 / 强制引用"),
@@ -62,9 +62,35 @@ RAW_TOOLCALL_IN_TEXT = [
 
 
 # ---------------------------------------------------------------------------
+def walk_stream(stdout: str) -> dict:
+    """从 stream-json stdout 里数 thinking 事件数和最终 token 数。
+    output_tokens 明显多于 thinking 事件数、却没有任何 text / toolRequest,
+    说明模型在 </think> 之后吐了东西但被 Ollama 的解析器吞了 —— 环 2 的证据。"""
+    thinking_events = 0
+    output_tokens = None
+    for line in stdout.splitlines():
+        if not line.startswith("{"):
+            continue
+        try:
+            e = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if e.get("type") == "message":
+            for part in (e.get("message") or {}).get("content") or []:
+                if part.get("type") == "thinking":
+                    thinking_events += 1
+        elif e.get("type") == "complete":
+            output_tokens = e.get("output_tokens")
+    return {"thinking_events": thinking_events, "output_tokens": output_tokens}
+
+
+SWALLOWED_MIN_TOKENS = 15
+
+
 def walk_session(session: dict | None) -> dict:
     """从 session.json 里抽出诊断需要的结构化信息。"""
     info = {
+        "last_assistant_thinking_only": False,
         "tool_requests": [],   # {name, args, status}
         "tool_errors": 0,      # toolRequest.status == error(格式坏)
         "tool_responses": [],  # {is_error, text}
@@ -102,6 +128,10 @@ def walk_session(session: dict | None) -> dict:
                 })
             elif t == "text" and role == "assistant" and part.get("text"):
                 info["assistant_texts"].append(part["text"])
+    conv = session.get("conversation") or []
+    if conv and conv[-1].get("role") == "assistant":
+        types = {p.get("type") for p in conv[-1].get("content") or []}
+        info["last_assistant_thinking_only"] = bool(types) and types <= {"thinking"}
     return info
 
 
@@ -141,6 +171,16 @@ def classify(record: dict, info: dict, meta: dict) -> tuple[int | None, str]:
         for pat in RAW_TOOLCALL_IN_TEXT:
             if re.search(pat, texts, re.IGNORECASE | re.MULTILINE):
                 return 2, f"回答文本里出现裸工具调用 /{pat}/"
+
+    # 环 2:有输出 token 但既没 text 也没 toolRequest —— 调用被解析器吞了
+    if not reqs and not info["assistant_texts"]:
+        st = info.get("stream") or {}
+        out, th = st.get("output_tokens"), st.get("thinking_events", 0)
+        if out is not None and out - th >= SWALLOWED_MIN_TOKENS:
+            return 2, f"thinking 之后还有约 {out - th} 个 token 但没产生 text/toolRequest(被解析器吞掉)"
+
+    if info.get("last_assistant_thinking_only") and not record.get("task_ok"):
+        return 2, f"最后一轮只有 thinking,没有 text/toolRequest(调了 {len(reqs)} 次后调用被解析器吞掉)"
 
     # 环 1:一次工具都没调
     if not reqs:
@@ -198,6 +238,7 @@ def main() -> None:
             except json.JSONDecodeError:
                 session = None
         info = walk_session(session)
+        info["stream"] = walk_stream(record.get("stdout", ""))
         ring, reason = classify(record, info, meta)
 
         total += 1

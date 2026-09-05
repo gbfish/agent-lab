@@ -54,6 +54,8 @@ python3 scripts/run_eval.py --model qwen3:14b-16k --repeat 3 --tag baseline
 python3 scripts/analyze.py runs/<日期_时间>/ --verbose
 ```
 
+改了某题的 `checks` 之后不用重跑,`python3 scripts/regrade.py runs/<目录>/` 重判。
+
 ### 第四步:人工过一遍 trajectory
 
 **脚本只能做粗分类,环 3 / 环 5 的区别机器判断不准,必须人看。**
@@ -98,9 +100,9 @@ python3 scripts/analyze.py runs/<日期_时间>/ --verbose
 |---|---|---|
 | Day 1 | 装 Goose,配 Ollama,跑通 hello world | ✅ 2026-09-04 |
 | Day 2 | 12 条任务集,runner + analyzer 跑通 | ✅ 2026-09-04(3 题冒烟 3/3) |
-| Day 3 | 拉 qwen3:14b,跑 `--repeat 3` 基线 | 🔄 2026-09-04 启动 |
-| Day 4 | `analyze.py` + 手工读 10 条 trajectory | |
-| Day 5 | 写结论到 `notes/findings.md`,走决策树 | |
+| Day 3 | 拉 qwen3:14b,跑 `--repeat 3` 基线 | ✅ 2026-09-04,36 次 64 分钟 |
+| Day 4 | `analyze.py` + 手工读失败 trajectory | ✅ 2026-09-04,9 条全读 |
+| Day 5 | 写结论到 `notes/findings.md`,走决策树 | ✅ 2026-09-04,环 2 主导 → 先免费对策 |
 | 之后 | 任务集扩到 50 条;把跑得最好的流程存成 recipe | |
 
 ---

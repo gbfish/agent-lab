@@ -137,6 +137,15 @@ def export_session(name: str, dest: Path) -> dict | None:
         return None
 
 
+def count_tool_calls(session: dict | None) -> int:
+    n = 0
+    for m in (session or {}).get("conversation") or []:
+        for part in m.get("content") or []:
+            if part.get("type") == "toolRequest":
+                n += 1
+    return n
+
+
 def final_answer(session: dict | None) -> str:
     """最后一条 assistant 文本(不含 thinking)。"""
     if not session:
@@ -161,10 +170,13 @@ def read_file(workdir: Path, rel: str) -> str | None:
     return p.read_text(encoding="utf-8", errors="replace")
 
 
-def run_check(check: dict, workdir: Path, answer: str) -> dict:
+def run_check(check: dict, workdir: Path, answer: str, n_tool_calls: int = 0) -> dict:
     t = check.get("type")
     ok, detail = False, ""
-    if t == "file_exists":
+    if t == "tool_calls_min":
+        ok = n_tool_calls >= int(check.get("n", 1))
+        detail = f"实际调用 {n_tool_calls} 次"
+    elif t == "file_exists":
         ok = (workdir / check["path"]).is_file()
     elif t == "file_absent":
         ok = not (workdir / check["path"]).exists()
@@ -290,7 +302,8 @@ def main() -> None:
             session = export_session(session_name, rundir / "session.json")
 
             answer = final_answer(session)
-            checks = [run_check(c, workdir, answer) for c in t["checks"]]
+            n_calls = count_tool_calls(session)
+            checks = [run_check(c, workdir, answer, n_calls) for c in t["checks"]]
             auto_checks = [c for c in checks if c["check"].get("type") != "manual"]
             task_ok = bool(auto_checks) and all(c["ok"] for c in auto_checks)
             passed += task_ok
@@ -303,6 +316,7 @@ def main() -> None:
                 "workdir": str(workdir),
                 "session_exported": session is not None,
                 "final_answer": answer,
+                "n_tool_calls": n_calls,
                 "checks": checks,
                 "task_ok": task_ok,
                 **result,

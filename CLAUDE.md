@@ -28,6 +28,7 @@ python3 scripts/run_eval.py --model qwen3:8b-32k --system "..." --tag "system=..
 # Analyze
 python3 scripts/analyze.py runs/<dir>/
 python3 scripts/analyze.py runs/<dir>/ --verbose      # per-run ring + tool-call count
+python3 scripts/regrade.py runs/<dir>/                # re-grade existing runs after editing a task's checks (no model rerun)
 
 # Manual smoke test of the chain
 goose run --provider ollama --model qwen3:8b-32k --no-profile --with-builtin developer --no-session -t "..."
@@ -38,8 +39,12 @@ goose run --provider ollama --model qwen3:8b-32k --no-profile --with-builtin dev
 Two scripts and a data contract between them:
 
 - **`scripts/run_eval.py`** — for each (task × repeat) creates an empty sandbox `work/` dir, writes `setup.files`, runs `goose run` with cwd there and `--output-format stream-json`, captures raw stdout/stderr/rc/elapsed, then `goose session export --format json` → `session.json`, then evaluates `checks` and writes `record.json`. The full argv is stored in each record so a run is reproducible without any config file.
-- **`scripts/analyze.py`** — parses `session.json` (`conversation[].content[]` items of type `thinking` / `text` / `toolRequest` / `toolResponse`). `toolRequest.toolCall.status == "error"` is the ring-2 signal; `toolResponse.toolResult.value.isError` is the ring-4 signal. Classifies each run into the first failing ring (7 → 6 → 2 → 1 → success → 4 → manual) and prints tool-call format rate, task pass rate with per-task stability, and the ring distribution. Rings 3 and 5 are deliberately left to human review of `session.json`.
-- **`evals/tasks.jsonl`** — the only long-lived asset. Each task has `setup.files`, machine-checkable `checks` (`file_exists`, `file_absent`, `file_equals`, `file_contains`, `file_not_contains`, `cmd`, `answer_contains`, `manual`), and a category from single-step / multi-step / impossible / false-premise. Schema and mix rules in `evals/README.md`. Every new task must be auto-gradable.
+- **`scripts/analyze.py`** — parses `session.json` (`conversation[].content[]` items of type `thinking` / `text` / `toolRequest` / `toolResponse`). `toolRequest.toolCall.status == "error"` is the ring-2 signal; `toolResponse.toolResult.value.isError` is the ring-4 signal. Also reads the stream-json stdout: if `output_tokens` exceeds the thinking-event count by 15+ with no text or toolRequest, the model's tool call was swallowed by Ollama's parser (ring 2). Classifies each run into the first failing ring (7 → 6 → 2 → 1 → success → 4 → manual) and prints tool-call format rate, task pass rate with per-task stability, and the ring distribution. Rings 3 and 5 are deliberately left to human review of `session.json`.
+- **`evals/tasks.jsonl`** — the only long-lived asset. Each task has `setup.files`, machine-checkable `checks` (`tool_calls_min`, `file_exists`, `file_absent`, `file_equals`, `file_contains`, `file_not_contains`, `cmd`, `answer_contains`, `manual`), and a category from single-step / multi-step / impossible / false-premise. Schema and mix rules in `evals/README.md`. Every new task must be auto-gradable.
+
+## Baseline result (2026-09-04, qwen3:14b-16k, 36 runs)
+
+Tool-call format rate 83%, task pass 81%. Dominant failure is ring 2: the model emits `<tool_call>` JSON with unescaped quotes inside string args, Ollama drops the call silently, Goose ends the turn with a thinking-only message. Details and the queued follow-up experiments (toolshim, other model families, 8b control) are in `notes/findings.md`.
 
 ## Hard rules from the docs
 

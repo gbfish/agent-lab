@@ -33,16 +33,46 @@
 - [x] 任务集 12 条 → `evals/tasks.jsonl`
 - [x] runner + analyzer 跑通(3 题冒烟)
 - [x] `ollama pull qwen3:14b` + 建 `qwen3:14b-16k`(32k 塞不下)
-- [ ] 跑基线:`run_eval.py --model qwen3:14b-16k --repeat 3 --tag baseline`(2026-09-04 启动)
-- [ ] 同一批题跑 `qwen3:8b-32k --repeat 3`,对照
-- [ ] `analyze.py` + 手工读 10 条失败 session.json
-- [ ] 走 `docs/05-eval-plan.md` 的决策树
-- [ ] 决定:买不买 Mac(9/22 发货,别拖过预订窗口)
-- [ ] 任务集扩到 50 条
+- [x] 跑基线:`run_eval.py --model qwen3:14b-16k --repeat 3 --tag baseline`(2026-09-04,36 次,64 分钟)
+- [x] `analyze.py` + 手工读全部 9 条失败 session.json
+- [x] 走 `docs/05-eval-plan.md` 的决策树 → 环 2 占主导,先做免费对策
+- [ ] 对照 A:`qwen3:8b-32k --repeat 3`,看环 2 是否随模型变化
+- [ ] 对照 B:Goose toolshim(`GOOSE_TOOLSHIM=true`),用小模型把文本调用重新解析,专治环 2
+- [ ] 对照 C:换模型家族(`qwen2.5-coder:14b` / `gemma3:12b` / `phi4:14b`),同一批题
+- [ ] 决定:买不买 Mac(9/22 发货)。目前证据:**先别买**,环 2 是 JSON 转义问题,70B 未必解决,免费对策先试
+- [ ] 任务集扩到 50 条;t08 的「(no output)」误读问题要加一条专门测
 
 ---
 
 ## 记录
+
+## 2026-09-04 · 基线:qwen3:14b 工具调用 83%,主瓶颈是环 2(JSON 引号没转义,被 Ollama 静默丢弃)
+
+**改了什么变量:** 无,这是基线。
+
+**配置:** `qwen3:14b-16k` / goose 1.49.0 / `--no-profile --with-builtin developer --max-turns 20 --max-tool-repetitions 3` / 12 题 × 3 / M3 Pro 18GB
+
+**数据(36 次,平均 107s/次,平均 1.9 次工具调用):**
+- 工具调用格式正确率:**83.3%**(30/36)→ 落在 70–90% 「边缘」档
+- 任务完成率:**80.6%**(29/36)
+- 失败分布:环1 0 · **环2 6** · 环3 0 · 环4 0 · 环5 0 · 环6 1 · 环7 0 · 待人工 2
+- 单步题(t01–t05)15/15 全过,多步题(t06–t10)13/15,无解题 t11 2/3,前提错误题 t12 0/3
+
+**手工读 trajectory 看到的:**
+- **环 2 的真实形态:** 6 次运行以「一大段 thinking 然后什么都没有」结束。stream 的 `complete` 事件显示 `</think>` 之后还有 25–60 个 output token 没有变成 text 或 toolRequest。
+  直接打 Ollama 复现(绕开解析器让原文落到 content 里):模型写的是
+  `{"name": "edit", "arguments": {"before": "print(f\"Hello, {name}!")", ...}}` —— 字符串里的引号没转义,JSON 非法,Ollama 丢掉整个调用,Goose 收到空消息就结束。6 次抽样 3 次非法。
+  关 thinking(`think=false`)复现 5 次:4 次调用成功、1 次同样被吞;**不是 thinking 的锅**。
+- **t08_r2(环 6):** `grep ... > errors.txt` 三次都成功了,但工具返回 `(no output)`,模型把它当失败反复重试,最后还汇报「没有 ERROR」。文件其实是对的。真实原因是**环 5(没读懂工具返回)**,不是循环设计。
+- **t12_r3:** 前提错误题,模型没读文件就把 `message` 改成 `msg`。盲从。t12_r1/r2 「通过」是因为调用被吞、什么都没做 —— 已加 `tool_calls_min` check 堵上这个漏洞。
+- **t11 r1/r3:** 其实答对了(「未找到 settings.yaml」),是我的关键字列表没覆盖「未找到」。已修,用 `regrade.py` 重判。
+- 两次 `rg: command not found`:模型默认 ripgrep 存在。
+- 上下文 16k 全程没撞到(环 7 为 0),最长一次 t08_r2 七次调用也没溢出。
+
+**结论 / 下一步:**
+- 走决策树:环 2 占主导 → 模型结构化输出问题。但形态很具体(引号转义),**不是「模型太小不会调工具」**,单步题 15/15 说明基本链路稳。
+- 硬件结论:**暂不买。** 70B 模型会不会同样写错 JSON 转义,不知道;而免费对策有三个可以先试(见待办)。
+- 下一步按顺序、每次一个变量:toolshim → 换模型家族 → 8b 对照。
 
 ## 2026-09-04 · 链路接通;Ollama 默认 4096 上下文是第一个必须绕开的坑
 
