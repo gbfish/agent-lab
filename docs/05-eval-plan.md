@@ -1,5 +1,7 @@
 # 05 · 基线测试计划
 
+> English version: [en/05-eval-plan.md](en/05-eval-plan.md)
+
 **目标:拿到一张失败分布表。在此之前不做任何架构或采购决策。**
 
 ---

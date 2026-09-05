@@ -1,5 +1,7 @@
 # 01 · 概念:什么才算 Agent
 
+> English version: [en/01-concepts.md](en/01-concepts.md)
+
 ---
 
 ## 一句话

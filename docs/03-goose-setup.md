@@ -1,5 +1,7 @@
 # 03 · Goose 安装与配置
 
+> English version: [en/03-goose-setup.md](en/03-goose-setup.md)
+
 > 项目已从 `block/goose` 迁到 Linux Foundation 的 `aaif-goose/goose`(2026-04)。
 > 搜到的旧链接会有一段时间失效,认准新仓库。本文按 **goose 1.49.0** 核对过。
 

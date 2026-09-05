@@ -1,5 +1,7 @@
 # 实验记录
 
+> English version: [findings.en.md](findings.en.md)
+
 **倒序排列,最新在上。每条必须带日期。**
 
 三周后你会忘记为什么做了某个选择 —— 写下来。

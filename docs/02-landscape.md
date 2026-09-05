@@ -1,5 +1,7 @@
 # 02 · 开源 Agent 生态与选型
 
+> English version: [en/02-landscape.md](en/02-landscape.md)
+
 > 数据来源:2026-08-29 的 GitHub 星数快照。这个领域变化很快,超过三个月请重新核对。
 
 ---

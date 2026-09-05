@@ -1,5 +1,7 @@
 # evals —— 本仓库唯一有长期价值的资产
 
+> English version: [README.en.md](README.en.md)
+
 代码会被重写,配置会过时,harness 会换。
 **但一份带自动判分的任务集,换任何模型任何框架都还能用。**
 

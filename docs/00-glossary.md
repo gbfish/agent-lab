@@ -1,5 +1,7 @@
 # 00 · 词汇表
 
+> English version: [en/00-glossary.md](en/00-glossary.md)
+
 先建立语言。这些词在所有 harness 的文档里到处都是。
 
 ---

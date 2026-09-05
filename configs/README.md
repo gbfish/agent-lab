@@ -1,5 +1,7 @@
 # configs
 
+> English version: [README.en.md](README.en.md)
+
 实验里**不用** Goose 的配置文件。所有参数由 `scripts/run_eval.py` 逐次通过命令行传给 `goose run`(`--provider` / `--model` / `--no-profile` / `--with-builtin` / `--max-turns` …),完整命令行记在每次运行的 `record.json` 里。
 
 原因:配置文件是全局状态,会让两次运行之间悄悄多出一个变量。

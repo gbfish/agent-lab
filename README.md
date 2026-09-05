@@ -1,6 +1,6 @@
 # agent-lab
 
-> **English summary.** An experiment bench, not a product. It answers one question with data:
+> **English summary** (full English README: [README.en.md](README.en.md); English docs under [`docs/en/`](docs/en/)). An experiment bench, not a product. It answers one question with data:
 > *where does the chain **local Ollama model → Goose CLI → Goose's built-in `developer` extension**
 > break when asked to run a real agent loop* (read files, run commands, edit files, look at the result,
 > decide the next step)? Every conclusion is traceable to raw trajectories under `runs/`.
@@ -25,8 +25,8 @@
 > 5 result returned but not used · 6 loop doesn't converge · 7 context overflow. Rings 1–2 are model capability;
 > everything else is prompt, tool-output, or loop design. Only the first ring is counted per run.
 >
-> Docs and notes are written in Chinese, and task prompts are Chinese too; the checks, scripts, and per-experiment
-> summaries under `runs/*/_analysis.txt` are language-neutral. Python ≥ 3.10.
+> Chinese docs are the originals and every one has an English twin (`docs/en/`, `*.en.md`). Task prompts are Chinese;
+> the checks, scripts, and per-experiment summaries under `runs/*/_analysis.txt` are language-neutral. Python ≥ 3.10.
 
 ---
 
@@ -112,7 +112,7 @@ python3 scripts/analyze.py runs/<刚才输出的目录>/ --verbose
 ## 目录说明
 
 ```
-docs/       所有背景知识和决策依据。先读这里。
+docs/       所有背景知识和决策依据。先读这里。英文版在 docs/en/。
 configs/    Goose 配置的参考副本(实际运行参数由 run_eval.py 逐次传入)
 evals/      任务集 ← 本仓库唯一有长期价值的资产
 runs/       原始 trajectory 落盘(已 gitignore)

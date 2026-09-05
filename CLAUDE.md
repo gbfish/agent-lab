@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-An experiment bench, not a product. Its single purpose is to answer, with data, *where* the chain **local Ollama model → Goose CLI → Goose's built-in `developer` extension (shell + file editing)** breaks when asked to run a real agent loop. Every conclusion must be traceable to raw trajectories in `runs/`. Docs and code are written in Chinese; keep new docs/notes in Chinese to match.
+An experiment bench, not a product. Its single purpose is to answer, with data, *where* the chain **local Ollama model → Goose CLI → Goose's built-in `developer` extension (shell + file editing)** breaks when asked to run a real agent loop. Every conclusion must be traceable to raw trajectories in `runs/`. Docs are bilingual: Chinese originals (`docs/*.md`, `evals/README.md`, `configs/README.md`, `notes/findings.md`, `README.md`) each have an English twin (`docs/en/*.md`, `*.en.md`, `README.en.md`). When editing one, update the other in the same commit; the Chinese file is the source of truth if they disagree.
 
 Read `docs/` in numeric order before changing anything; `docs/04-failure-modes.md` (the seven rings) and `docs/05-eval-plan.md` (decision tree) are the framework the scripts implement. `notes/findings.md` holds dated results and the current to-do list.
 

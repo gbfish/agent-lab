@@ -1,5 +1,7 @@
 # 04 · 七环:失败模式分类
 
+> English version: [en/04-failure-modes.md](en/04-failure-modes.md)
+
 > 这是本仓库的核心诊断框架。`scripts/analyze.py` 按这个分类统计。
 
 任何一环出问题,最终表现都是「回答不对」,但**原因完全不同,修法完全不同**。不打日志根本分不清。
