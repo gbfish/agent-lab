@@ -57,7 +57,7 @@ RAW_TOOLCALL_IN_TEXT = [
     r"<function[=_ ]",
     r"<invoke ",
     r"\"tool_calls\"\s*:",
-    r"^\s*```(json)?\s*\{\s*\"name\"\s*:\s*\"(shell|write|text_editor|str_replace|view)\"",
+    r"^\s*(```(json)?\s*)?\{\s*\"name\"\s*:\s*\"[A-Za-z_]+\"\s*,\s*\"arguments\"",
 ]
 
 
@@ -93,6 +93,7 @@ def walk_session(session: dict | None) -> dict:
         "last_assistant_thinking_only": False,
         "tool_requests": [],   # {name, args, status}
         "tool_errors": 0,      # toolRequest.status == error(格式坏)
+        "unparseable": 0,      # toolshim 模式下解释器没解析出调用的次数
         "tool_responses": [],  # {is_error, text}
         "assistant_texts": [],
         "assistant_turns": 0,
@@ -116,6 +117,8 @@ def walk_session(session: dict | None) -> dict:
                 })
                 if status != "success":
                     info["tool_errors"] += 1
+                if val.get("name") == "unparseable_tool_call":
+                    info["unparseable"] += 1
             elif t == "toolResponse":
                 tr = part.get("toolResult") or {}
                 val = tr.get("value") or {}
@@ -158,11 +161,20 @@ def classify(record: dict, info: dict, meta: dict) -> tuple[int | None, str]:
     max_turns = meta.get("max_turns")
     if max_turns and len(reqs) >= max_turns:
         return 6, f"工具调用 {len(reqs)} 次,撞上 max-turns={max_turns}"
-    if len(reqs) >= 3:
-        keys = [json.dumps({"n": r["name"], "a": r["args"]}, sort_keys=True) for r in reqs]
+    real = [r for r in reqs if r["name"] != "unparseable_tool_call"]
+    if len(real) >= 3:
+        keys = [json.dumps({"n": r["name"], "a": r["args"]}, sort_keys=True) for r in real]
         for i in range(len(keys) - 2):
             if keys[i] == keys[i + 1] == keys[i + 2]:
-                return 6, f"连续 3 次完全相同的调用 {reqs[i]['name']}"
+                if record.get("task_ok"):
+                    return None, f"成功,但连续 3 次完全相同的调用 {real[i]['name']}(没读懂工具返回,环 5 苗头)"
+                return 6, f"连续 3 次完全相同的调用 {real[i]['name']}"
+
+    # toolshim:解释器解析失败会产生 unparseable_tool_call。任务过了就算成功(记个数),没过算环 2
+    if info["unparseable"]:
+        if record.get("task_ok"):
+            return None, f"成功,但 toolshim 有 {info['unparseable']} 次解析失败(重试后恢复)"
+        return 2, f"toolshim 解析失败 {info['unparseable']} 次,任务没过"
 
     # 环 2:goose 解析失败的调用,或调用被当成文本吐出来
     if info["tool_errors"]:
@@ -226,6 +238,8 @@ def main() -> None:
     total = 0
     elapsed_sum = 0.0
     tool_calls_sum = 0
+    unparseable_runs = 0
+    unparseable_sum = 0
     rows = []
 
     for d in run_dirs:
@@ -244,6 +258,9 @@ def main() -> None:
         total += 1
         elapsed_sum += record.get("elapsed_sec") or 0
         tool_calls_sum += len(info["tool_requests"])
+        if info["unparseable"]:
+            unparseable_runs += 1
+            unparseable_sum += info["unparseable"]
         tid = record.get("task", {}).get("id", d.name)
         per_task[tid].append(bool(record.get("task_ok")))
         if record.get("task_ok"):
@@ -272,6 +289,8 @@ def main() -> None:
         print(f"ollama 上下文: {ctx if ctx else '(未记录)'}   goose: {meta.get('goose_version')}")
     print(f"总运行次数: {total}   平均耗时: {elapsed_sum / total:.0f}s   "
           f"平均工具调用: {tool_calls_sum / total:.1f} 次")
+    if unparseable_runs:
+        print(f"toolshim 解析失败: {unparseable_runs} 次运行里共 {unparseable_sum} 次(已从工具调用数里看得出)")
     print("=" * 62)
 
     rate = tool_call_ok / total * 100 if total else 0.0
