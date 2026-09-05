@@ -6,7 +6,7 @@ set -u
 cd "$(dirname "$0")/.."
 
 SERIES=(
-  "exp_toolshim_qwen3-14b|toolshim mistral-nemo, model qwen3:14b-16k|--model qwen3:14b-16k --env GOOSE_TOOLSHIM=true --env GOOSE_TOOLSHIM_OLLAMA_MODEL=mistral-nemo --timeout 900"
+  "exp_toolshim_qwen3-14b|toolshim mistral-nemo, model qwen3:14b-16k|--model qwen3:14b-16k --env GOOSE_TOOLSHIM=true --env GOOSE_TOOLSHIM_OLLAMA_MODEL=mistral-nemo --timeout 1500"
   "exp_qwen2.5-coder-14b|model=qwen2.5-coder:14b-16k|--model qwen2.5-coder:14b-16k"
   "exp_qwen3-8b-32k|model=qwen3:8b-32k control|--model qwen3:8b-32k"
 )
