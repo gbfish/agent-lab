@@ -42,9 +42,16 @@ Two scripts and a data contract between them:
 - **`scripts/analyze.py`** — parses `session.json` (`conversation[].content[]` items of type `thinking` / `text` / `toolRequest` / `toolResponse`). `toolRequest.toolCall.status == "error"` is the ring-2 signal; `toolResponse.toolResult.value.isError` is the ring-4 signal. Also reads the stream-json stdout: if `output_tokens` exceeds the thinking-event count by 15+ with no text or toolRequest, the model's tool call was swallowed by Ollama's parser (ring 2). Classifies each run into the first failing ring (7 → 6 → 2 → 1 → success → 4 → manual) and prints tool-call format rate, task pass rate with per-task stability, and the ring distribution. Rings 3 and 5 are deliberately left to human review of `session.json`.
 - **`evals/tasks.jsonl`** — the only long-lived asset. Each task has `setup.files`, machine-checkable `checks` (`tool_calls_min`, `file_exists`, `file_absent`, `file_equals`, `file_contains`, `file_not_contains`, `cmd`, `answer_contains`, `manual`), and a category from single-step / multi-step / impossible / false-premise. Schema and mix rules in `evals/README.md`. Every new task must be auto-gradable.
 
-## Baseline result (2026-09-04, qwen3:14b-16k, 36 runs)
+## Results so far (2026-09-05, 144 runs; full tables in `notes/findings.md`)
 
-Tool-call format rate 83%, task pass 81%. Dominant failure is ring 2: the model emits `<tool_call>` JSON with unescaped quotes inside string args, Ollama drops the call silently, Goose ends the turn with a thinking-only message. Details and the queued follow-up experiments (toolshim, other model families, 8b control) are in `notes/findings.md`.
+| Config | Format | Pass | s/run |
+|---|---|---|---|
+| qwen3:14b-16k baseline | 83% | 81% | 107 |
+| + toolshim (mistral-nemo) | 97% | 94% | 324 |
+| qwen2.5-coder:14b-16k | 0% | 0% | 5 |
+| qwen3:8b-32k | 100% | 86% | 79 |
+
+Ring 2 (unescaped quotes in tool-call JSON, dropped by Ollama) is specific to qwen3:14b; 8b never triggers it. qwen2.5-coder emits tool calls as plain text and cannot drive Goose without toolshim. Remaining failures on every config are reasoning quality: treating `(no output)` as failure and retrying (once destructively), editing files that are not broken, and relative/absolute path confusion. Current best config is `qwen3:8b-32k` bare. Hardware decision: not justified by the data. Next single-variable experiment is a `--system` prompt targeting those three behaviours. Use `scripts/run_series.sh` for sequential experiments.
 
 ## Hard rules from the docs
 

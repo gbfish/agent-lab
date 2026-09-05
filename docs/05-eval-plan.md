@@ -103,6 +103,7 @@ python3 scripts/analyze.py runs/<日期_时间>/ --verbose
 | Day 3 | 拉 qwen3:14b,跑 `--repeat 3` 基线 | ✅ 2026-09-04,36 次 64 分钟 |
 | Day 4 | `analyze.py` + 手工读失败 trajectory | ✅ 2026-09-04,9 条全读 |
 | Day 5 | 写结论到 `notes/findings.md`,走决策树 | ✅ 2026-09-04,环 2 主导 → 先免费对策 |
+| Day 6 | 三组对照:toolshim / qwen2.5-coder / qwen3:8b | ✅ 2026-09-05 凌晨,108 次 4 小时 |
 | 之后 | 任务集扩到 50 条;把跑得最好的流程存成 recipe | |
 
 ---
