@@ -1,0 +1,30 @@
+{
+  "started_at": "2026-09-05T00:39:08",
+  "provider": "ollama",
+  "model": "qwen2.5-coder:14b-16k",
+  "builtin": "developer",
+  "system": "",
+  "env": {},
+  "repeat": 3,
+  "timeout": 600,
+  "max_turns": 20,
+  "max_tool_repetitions": 3,
+  "tag": "model=qwen2.5-coder:14b-16k",
+  "task_count": 12,
+  "task_ids": [
+    "t01",
+    "t02",
+    "t03",
+    "t04",
+    "t05",
+    "t06",
+    "t07",
+    "t08",
+    "t09",
+    "t10",
+    "t11",
+    "t12"
+  ],
+  "ollama_context_length": 16384,
+  "goose_version": "1.49.0"
+}

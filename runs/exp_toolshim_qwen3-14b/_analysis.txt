@@ -1,0 +1,79 @@
+  t01_r1       OK     calls=2   成功,但 toolshim 有 1 次解析失败(重试后恢复)
+  t01_r2       OK     calls=2   成功,但 toolshim 有 1 次解析失败(重试后恢复)
+  t01_r3       OK     calls=2   成功,但 toolshim 有 1 次解析失败(重试后恢复)
+  t02_r1       OK     calls=8   成功,但 toolshim 有 6 次解析失败(重试后恢复)
+  t02_r2       OK     calls=12  成功,但 toolshim 有 10 次解析失败(重试后恢复)
+  t02_r3       OK     calls=13  成功,但 toolshim 有 10 次解析失败(重试后恢复)
+  t03_r1       OK     calls=1   成功
+  t03_r2       OK     calls=2   成功
+  t03_r3       OK     calls=1   成功
+  t04_r1       OK     calls=1   成功
+  t04_r2       OK     calls=4   成功,但 toolshim 有 3 次解析失败(重试后恢复)
+  t04_r3       OK     calls=2   成功,但 toolshim 有 1 次解析失败(重试后恢复)
+  t05_r1       OK     calls=4   成功,但 toolshim 有 2 次解析失败(重试后恢复)
+  t05_r2       OK     calls=1   成功
+  t05_r3       OK     calls=2   成功,但 toolshim 有 1 次解析失败(重试后恢复)
+  t06_r1       OK     calls=5   成功,但 toolshim 有 1 次解析失败(重试后恢复)
+  t06_r2       OK     calls=3   成功,但 toolshim 有 1 次解析失败(重试后恢复)
+  t06_r3       OK     calls=2   成功
+  t07_r1       OK     calls=4   成功,但 toolshim 有 1 次解析失败(重试后恢复)
+  t07_r2       OK     calls=6   成功,但 toolshim 有 2 次解析失败(重试后恢复)
+  t07_r3       OK     calls=5   成功,但 toolshim 有 2 次解析失败(重试后恢复)
+  t08_r1       OK     calls=7   成功,但连续 3 次完全相同的调用 shell(没读懂工具返回,环 5 苗头)
+  t08_r2       OK     calls=9   成功,但 toolshim 有 3 次解析失败(重试后恢复)
+  t08_r3       OK     calls=10  成功,但 toolshim 有 2 次解析失败(重试后恢复)
+  t09_r1       OK     calls=4   成功,但 toolshim 有 1 次解析失败(重试后恢复)
+  t09_r2       OK     calls=4   成功,但 toolshim 有 2 次解析失败(重试后恢复)
+  t09_r3       OK     calls=1   成功
+  t10_r1       OK     calls=5   成功,但 toolshim 有 1 次解析失败(重试后恢复)
+  t10_r2       OK     calls=4   成功
+  t10_r3       OK     calls=7   成功,但 toolshim 有 2 次解析失败(重试后恢复)
+  t11_r1       OK     calls=6   成功,但 toolshim 有 3 次解析失败(重试后恢复)
+  t11_r2       OK     calls=13  成功,但 toolshim 有 4 次解析失败(重试后恢复)
+  t11_r3       环6     calls=20  工具调用 20 次,撞上 max-turns=20
+  t12_r1       OK     calls=2   成功
+  t12_r2       OK     calls=7   成功,但 toolshim 有 4 次解析失败(重试后恢复)
+  t12_r3       环2     calls=3   toolshim 解析失败 1 次,任务没过
+
+==============================================================
+运行目录: runs/exp_toolshim_qwen3-14b
+model: qwen3:14b-16k   重复: 3   tag: toolshim mistral-nemo, model qwen3:14b-16k
+ollama 上下文: (未记录)   goose: 1.49.0
+总运行次数: 36   平均耗时: 324s   平均工具调用: 5.1 次
+toolshim 解析失败: 27 次运行里共 83 次(已从工具调用数里看得出)
+==============================================================
+
+【指标 1】工具调用格式正确率: 97.2%  (35/36)
+  ↳ 定义:没崩在环 1(不调用)或环 2(格式错)的比例
+  ↳ 判据:≥90% → 模型够用,瓶颈在别处。别买机器,去修软件问题
+
+【指标 2】任务完成率: 94.4%  (34/36)
+  ↳ 每题稳定性(过/跑):
+      t01  3/3
+      t02  3/3
+      t03  3/3
+      t04  3/3
+      t05  3/3
+      t06  3/3
+      t07  3/3
+      t08  3/3
+      t09  3/3
+      t10  3/3
+      t11  2/3  ← 不稳定,重点读
+      t12  2/3  ← 不稳定,重点读
+
+【指标 3】七环失败分布
+--------------------------------------------------------------
+  环1 不调用工具          0  
+  环2 调用格式错          1  ████████████████████████
+  环3 选错工具或参数        0  
+  环4 工具返回错误         0  
+  环5 结果没用上          0  
+  环6 循环不收敛          1  ████████████████████████ ←
+  环7 上下文溢出          0  
+--------------------------------------------------------------
+  主瓶颈:环6 · 循环不收敛
+    症状:反复调同一工具 / 超时 / 撞上 max-turns
+    修法:终止条件设计
+
+下一步:走 docs/05-eval-plan.md 的决策树,结论写进 notes/findings.md

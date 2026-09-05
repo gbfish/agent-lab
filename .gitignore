@@ -1,6 +1,12 @@
-# 原始 trajectory + 导出的 session —— 涨得快
+# 原始 trajectory + 导出的 session —— 含本机路径,涨得快。只提交每组实验的摘要
 runs/*
 !runs/.gitkeep
+!runs/*/
+runs/*/*
+!runs/*/_meta.json
+!runs/*/_analysis.txt
+runs/_smoke_*/
+runs/*.log
 
 # 本地配置副本(含绝对路径和可能的凭据)
 configs/goose.yaml

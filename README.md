@@ -20,7 +20,13 @@
 > Current best configuration: `qwen3:8b-32k`, bare. Full write-ups in [`notes/findings.md`](notes/findings.md)
 > (Chinese); the failure taxonomy ("seven rings") is [`docs/04-failure-modes.md`](docs/04-failure-modes.md).
 >
-> Docs and notes are written in Chinese. The task set (`evals/tasks.jsonl`) and scripts are language-neutral.
+> **The seven rings** (first failing link per run, see `docs/04-failure-modes.md`): 1 never calls a tool ·
+> 2 call malformed / dropped by parser · 3 wrong tool or arguments · 4 tool errored and agent didn't recover ·
+> 5 result returned but not used · 6 loop doesn't converge · 7 context overflow. Rings 1–2 are model capability;
+> everything else is prompt, tool-output, or loop design. Only the first ring is counted per run.
+>
+> Docs and notes are written in Chinese, and task prompts are Chinese too; the checks, scripts, and per-experiment
+> summaries under `runs/*/_analysis.txt` are language-neutral. Python ≥ 3.10.
 
 ---
 
@@ -70,6 +76,8 @@
 
 ## 快速开始
 
+需要 Python ≥ 3.10(脚本用了 `X | None` 语法),macOS 或 Linux。
+
 ```bash
 # 1. 读文档,顺序很重要
 open docs/00-glossary.md      # 词汇表,先建立语言
@@ -77,24 +85,27 @@ open docs/03-goose-setup.md   # 装 Goose 接 Ollama
 
 # 2. 装 Goose
 brew install block-goose-cli  # 或 curl -fsSL https://getgoose.ai/install.sh | bash
-goose --version
+goose --version               # 本仓库按 1.49.0 核对
 
-# 3. 起 Ollama —— 上下文必须调大,默认 4096 会让模型根本看不到工具定义
-OLLAMA_CONTEXT_LENGTH=32768 ollama serve
-ollama pull qwen3:14b
+# 3. 准备模型 —— Goose 不设 num_ctx,Ollama 默认 4096 会让模型看不全工具定义。
+#    用带 num_ctx 的模型变体,不要依赖服务端环境变量(菜单栏版 Ollama 吃不到)
+ollama pull qwen3:8b
+ollama create qwen3:8b-32k -f configs/Modelfile.qwen3-8b-32k
 
 # 4. 冒烟测试:在一个空目录里让它真的动手
 mkdir -p /tmp/goose-smoke && cd /tmp/goose-smoke
-goose run --provider ollama --model qwen3:14b --with-builtin developer \
+goose run --provider ollama --model qwen3:8b-32k --no-profile --with-builtin developer \
   --no-session -t "在当前目录创建 hello.txt,内容写 hello"
 ls   # 看到 hello.txt 才算接通;只输出一段代码让你自己跑 = 工具没接通
 
-# 5. 跑基线(题目在 evals/tasks.jsonl,已带 12 条起步)
-python3 scripts/run_eval.py --model qwen3:14b --repeat 3 --tag baseline
-python3 scripts/analyze.py runs/<刚才输出的目录>/
+# 5. 跑基线(题目在 evals/tasks.jsonl,已带 12 条)。12 题 × 3 次,8b 约 50 分钟
+cd -
+python3 scripts/run_eval.py --model qwen3:8b-32k --repeat 3 --tag baseline
+python3 scripts/analyze.py runs/<刚才输出的目录>/ --verbose
 ```
 
 跑完看 `analyze.py` 输出的那张失败分布表。**那张表决定接下来做什么**,分支逻辑写在 `docs/05-eval-plan.md`。
+每组实验的 `_meta.json` 和 `_analysis.txt` 已随仓库提交(`runs/`),原始 session 因含本机路径不提交。
 
 ---
 
@@ -116,8 +127,8 @@ notes/      每次测完的结论,按日期追加
 **1. `evals/tasks.jsonl` 优先于代码。**
 代码会被重写,配置会过时,harness 会换。但一份带自动判分的真实任务集,换任何模型任何框架都还能用。目标 50 条,12 条起步。
 
-**2. 不要把 `runs/` 提交上去。**
-每次运行会导出完整 session,涨得快。`.gitignore` 已经处理了,但每次 `git add` 前再确认一遍。
+**2. `runs/` 只提交摘要。**
+每次运行导出的 session.json 含本机绝对路径且涨得快,不提交;每组实验的 `_meta.json` 和 `_analysis.txt` 要提交,否则 README 里的数字没法核对。`.gitignore` 已按这个规则设好。
 
 ---
 

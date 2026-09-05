@@ -1,0 +1,82 @@
+  t01_r1       OK     calls=1   成功
+  t01_r2       OK     calls=1   成功
+  t01_r3       OK     calls=1   成功
+  t02_r1       OK     calls=1   成功
+  t02_r2       OK     calls=2   成功
+  t02_r3       OK     calls=2   成功
+  t03_r1       OK     calls=1   成功
+  t03_r2       OK     calls=1   成功
+  t03_r3       OK     calls=1   成功
+  t04_r1       OK     calls=1   成功
+  t04_r2       OK     calls=1   成功
+  t04_r3       OK     calls=1   成功
+  t05_r1       OK     calls=1   成功
+  t05_r2       OK     calls=1   成功
+  t05_r3       OK     calls=2   成功
+  t06_r1       OK     calls=6   成功
+  t06_r2       OK     calls=3   成功
+  t06_r3       OK     calls=2   成功
+  t07_r1       环2     calls=0   thinking 之后还有约 25 个 token 但没产生 text/toolRequest(被解析器吞掉)
+  t07_r2       OK     calls=3   成功
+  t07_r3       OK     calls=3   成功
+  t08_r1       OK     calls=2   成功
+  t08_r2       OK     calls=7   成功,但连续 3 次完全相同的调用 shell(没读懂工具返回,环 5 苗头)
+  t08_r3       环2     calls=0   thinking 之后还有约 60 个 token 但没产生 text/toolRequest(被解析器吞掉)
+  t09_r1       OK     calls=1   成功
+  t09_r2       OK     calls=2   成功
+  t09_r3       OK     calls=1   成功
+  t10_r1       环2     calls=2   最后一轮只有 thinking,没有 text/toolRequest(调了 2 次后调用被解析器吞掉)
+  t10_r2       OK     calls=4   成功
+  t10_r3       OK     calls=5   成功
+  t11_r1       OK     calls=1   成功
+  t11_r2       环2     calls=0   thinking 之后还有约 30 个 token 但没产生 text/toolRequest(被解析器吞掉)
+  t11_r3       OK     calls=4   成功
+  t12_r1       环2     calls=0   thinking 之后还有约 32 个 token 但没产生 text/toolRequest(被解析器吞掉)
+  t12_r2       环2     calls=0   thinking 之后还有约 34 个 token 但没产生 text/toolRequest(被解析器吞掉)
+  t12_r3       待人工    calls=4   工具调过、没报错、但任务没过 → 人工判断环 3 / 环 5
+
+==============================================================
+运行目录: runs/baseline_qwen3-14b-16k
+model: qwen3:14b-16k   重复: 3   tag: baseline qwen3:14b-16k
+ollama 上下文: 16384   goose: 1.49.0
+总运行次数: 36   平均耗时: 107s   平均工具调用: 1.9 次
+==============================================================
+
+【指标 1】工具调用格式正确率: 83.3%  (30/36)
+  ↳ 定义:没崩在环 1(不调用)或环 2(格式错)的比例
+  ↳ 判据:70-90% → 边缘。先免费试提示工程 / 减少工具数,不行再考虑硬件
+
+【指标 2】任务完成率: 80.6%  (29/36)
+  ↳ 每题稳定性(过/跑):
+      t01  3/3
+      t02  3/3
+      t03  3/3
+      t04  3/3
+      t05  3/3
+      t06  3/3
+      t07  2/3  ← 不稳定,重点读
+      t08  2/3  ← 不稳定,重点读
+      t09  3/3
+      t10  2/3  ← 不稳定,重点读
+      t11  2/3  ← 不稳定,重点读
+      t12  0/3
+
+【指标 3】七环失败分布
+--------------------------------------------------------------
+  环1 不调用工具          0  
+  环2 调用格式错          6  ████████████████████████ ←
+  环3 选错工具或参数        0  
+  环4 工具返回错误         0  
+  环5 结果没用上          0  
+  环6 循环不收敛          0  
+  环7 上下文溢出          0  
+--------------------------------------------------------------
+  主瓶颈:环2 · 调用格式错
+    症状:裸文本、畸形 XML、缺字段;或 </think> 后的调用被解析器吞掉
+    修法:换模型 / 关 thinking 对照
+
+【待人工判断】1 条
+  工具调过、没报错、但任务没过 —— 环 3 / 环 5 藏在这里,读 session.json:
+    runs/baseline_qwen3-14b-16k/t12_r3/session.json
+
+下一步:走 docs/05-eval-plan.md 的决策树,结论写进 notes/findings.md

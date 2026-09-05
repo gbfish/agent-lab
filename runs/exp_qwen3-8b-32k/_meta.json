@@ -1,0 +1,30 @@
+{
+  "started_at": "2026-09-05T00:42:26",
+  "provider": "ollama",
+  "model": "qwen3:8b-32k",
+  "builtin": "developer",
+  "system": "",
+  "env": {},
+  "repeat": 3,
+  "timeout": 600,
+  "max_turns": 20,
+  "max_tool_repetitions": 3,
+  "tag": "model=qwen3:8b-32k control",
+  "task_count": 12,
+  "task_ids": [
+    "t01",
+    "t02",
+    "t03",
+    "t04",
+    "t05",
+    "t06",
+    "t07",
+    "t08",
+    "t09",
+    "t10",
+    "t11",
+    "t12"
+  ],
+  "ollama_context_length": 32768,
+  "goose_version": "1.49.0"
+}

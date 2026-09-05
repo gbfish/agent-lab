@@ -1,0 +1,78 @@
+  t01_r1       环2     calls=0   回答文本里出现裸工具调用 /^\s*(```(json)?\s*)?\{\s*\"name\"\s*:\s*\"[A-Za-z_]+\"\s*,\s*\"arguments\"/
+  t01_r2       环2     calls=0   回答文本里出现裸工具调用 /^\s*(```(json)?\s*)?\{\s*\"name\"\s*:\s*\"[A-Za-z_]+\"\s*,\s*\"arguments\"/
+  t01_r3       环2     calls=0   回答文本里出现裸工具调用 /^\s*(```(json)?\s*)?\{\s*\"name\"\s*:\s*\"[A-Za-z_]+\"\s*,\s*\"arguments\"/
+  t02_r1       环2     calls=0   回答文本里出现裸工具调用 /^\s*(```(json)?\s*)?\{\s*\"name\"\s*:\s*\"[A-Za-z_]+\"\s*,\s*\"arguments\"/
+  t02_r2       环2     calls=0   回答文本里出现裸工具调用 /^\s*(```(json)?\s*)?\{\s*\"name\"\s*:\s*\"[A-Za-z_]+\"\s*,\s*\"arguments\"/
+  t02_r3       环2     calls=0   回答文本里出现裸工具调用 /^\s*(```(json)?\s*)?\{\s*\"name\"\s*:\s*\"[A-Za-z_]+\"\s*,\s*\"arguments\"/
+  t03_r1       环2     calls=0   回答文本里出现裸工具调用 /^\s*(```(json)?\s*)?\{\s*\"name\"\s*:\s*\"[A-Za-z_]+\"\s*,\s*\"arguments\"/
+  t03_r2       环2     calls=0   回答文本里出现裸工具调用 /^\s*(```(json)?\s*)?\{\s*\"name\"\s*:\s*\"[A-Za-z_]+\"\s*,\s*\"arguments\"/
+  t03_r3       环2     calls=0   回答文本里出现裸工具调用 /^\s*(```(json)?\s*)?\{\s*\"name\"\s*:\s*\"[A-Za-z_]+\"\s*,\s*\"arguments\"/
+  t04_r1       环2     calls=0   回答文本里出现裸工具调用 /^\s*(```(json)?\s*)?\{\s*\"name\"\s*:\s*\"[A-Za-z_]+\"\s*,\s*\"arguments\"/
+  t04_r2       环2     calls=0   回答文本里出现裸工具调用 /^\s*(```(json)?\s*)?\{\s*\"name\"\s*:\s*\"[A-Za-z_]+\"\s*,\s*\"arguments\"/
+  t04_r3       环2     calls=0   回答文本里出现裸工具调用 /^\s*(```(json)?\s*)?\{\s*\"name\"\s*:\s*\"[A-Za-z_]+\"\s*,\s*\"arguments\"/
+  t05_r1       环2     calls=0   回答文本里出现裸工具调用 /^\s*(```(json)?\s*)?\{\s*\"name\"\s*:\s*\"[A-Za-z_]+\"\s*,\s*\"arguments\"/
+  t05_r2       环2     calls=0   回答文本里出现裸工具调用 /^\s*(```(json)?\s*)?\{\s*\"name\"\s*:\s*\"[A-Za-z_]+\"\s*,\s*\"arguments\"/
+  t05_r3       环2     calls=0   回答文本里出现裸工具调用 /^\s*(```(json)?\s*)?\{\s*\"name\"\s*:\s*\"[A-Za-z_]+\"\s*,\s*\"arguments\"/
+  t06_r1       环2     calls=0   回答文本里出现裸工具调用 /^\s*(```(json)?\s*)?\{\s*\"name\"\s*:\s*\"[A-Za-z_]+\"\s*,\s*\"arguments\"/
+  t06_r2       环2     calls=0   回答文本里出现裸工具调用 /^\s*(```(json)?\s*)?\{\s*\"name\"\s*:\s*\"[A-Za-z_]+\"\s*,\s*\"arguments\"/
+  t06_r3       环2     calls=0   回答文本里出现裸工具调用 /^\s*(```(json)?\s*)?\{\s*\"name\"\s*:\s*\"[A-Za-z_]+\"\s*,\s*\"arguments\"/
+  t07_r1       环2     calls=0   回答文本里出现裸工具调用 /^\s*(```(json)?\s*)?\{\s*\"name\"\s*:\s*\"[A-Za-z_]+\"\s*,\s*\"arguments\"/
+  t07_r2       环2     calls=0   回答文本里出现裸工具调用 /^\s*(```(json)?\s*)?\{\s*\"name\"\s*:\s*\"[A-Za-z_]+\"\s*,\s*\"arguments\"/
+  t07_r3       环2     calls=0   回答文本里出现裸工具调用 /^\s*(```(json)?\s*)?\{\s*\"name\"\s*:\s*\"[A-Za-z_]+\"\s*,\s*\"arguments\"/
+  t08_r1       环2     calls=0   回答文本里出现裸工具调用 /^\s*(```(json)?\s*)?\{\s*\"name\"\s*:\s*\"[A-Za-z_]+\"\s*,\s*\"arguments\"/
+  t08_r2       环2     calls=0   回答文本里出现裸工具调用 /^\s*(```(json)?\s*)?\{\s*\"name\"\s*:\s*\"[A-Za-z_]+\"\s*,\s*\"arguments\"/
+  t08_r3       环2     calls=0   回答文本里出现裸工具调用 /^\s*(```(json)?\s*)?\{\s*\"name\"\s*:\s*\"[A-Za-z_]+\"\s*,\s*\"arguments\"/
+  t09_r1       环2     calls=0   回答文本里出现裸工具调用 /^\s*(```(json)?\s*)?\{\s*\"name\"\s*:\s*\"[A-Za-z_]+\"\s*,\s*\"arguments\"/
+  t09_r2       环2     calls=0   回答文本里出现裸工具调用 /^\s*(```(json)?\s*)?\{\s*\"name\"\s*:\s*\"[A-Za-z_]+\"\s*,\s*\"arguments\"/
+  t09_r3       环2     calls=0   回答文本里出现裸工具调用 /^\s*(```(json)?\s*)?\{\s*\"name\"\s*:\s*\"[A-Za-z_]+\"\s*,\s*\"arguments\"/
+  t10_r1       环2     calls=0   回答文本里出现裸工具调用 /^\s*(```(json)?\s*)?\{\s*\"name\"\s*:\s*\"[A-Za-z_]+\"\s*,\s*\"arguments\"/
+  t10_r2       环2     calls=0   回答文本里出现裸工具调用 /^\s*(```(json)?\s*)?\{\s*\"name\"\s*:\s*\"[A-Za-z_]+\"\s*,\s*\"arguments\"/
+  t10_r3       环2     calls=0   回答文本里出现裸工具调用 /^\s*(```(json)?\s*)?\{\s*\"name\"\s*:\s*\"[A-Za-z_]+\"\s*,\s*\"arguments\"/
+  t11_r1       环2     calls=0   回答文本里出现裸工具调用 /^\s*(```(json)?\s*)?\{\s*\"name\"\s*:\s*\"[A-Za-z_]+\"\s*,\s*\"arguments\"/
+  t11_r2       环2     calls=0   回答文本里出现裸工具调用 /^\s*(```(json)?\s*)?\{\s*\"name\"\s*:\s*\"[A-Za-z_]+\"\s*,\s*\"arguments\"/
+  t11_r3       环2     calls=0   回答文本里出现裸工具调用 /^\s*(```(json)?\s*)?\{\s*\"name\"\s*:\s*\"[A-Za-z_]+\"\s*,\s*\"arguments\"/
+  t12_r1       环2     calls=0   回答文本里出现裸工具调用 /^\s*(```(json)?\s*)?\{\s*\"name\"\s*:\s*\"[A-Za-z_]+\"\s*,\s*\"arguments\"/
+  t12_r2       环2     calls=0   回答文本里出现裸工具调用 /^\s*(```(json)?\s*)?\{\s*\"name\"\s*:\s*\"[A-Za-z_]+\"\s*,\s*\"arguments\"/
+  t12_r3       环2     calls=0   回答文本里出现裸工具调用 /^\s*(```(json)?\s*)?\{\s*\"name\"\s*:\s*\"[A-Za-z_]+\"\s*,\s*\"arguments\"/
+
+==============================================================
+运行目录: runs/exp_qwen2.5-coder-14b
+model: qwen2.5-coder:14b-16k   重复: 3   tag: model=qwen2.5-coder:14b-16k
+ollama 上下文: 16384   goose: 1.49.0
+总运行次数: 36   平均耗时: 5s   平均工具调用: 0.0 次
+==============================================================
+
+【指标 1】工具调用格式正确率: 0.0%  (0/36)
+  ↳ 定义:没崩在环 1(不调用)或环 2(格式错)的比例
+  ↳ 判据:<70% → 模型能力不足。如果环 1/2 占多数,硬件投资理由充分
+
+【指标 2】任务完成率: 0.0%  (0/36)
+  ↳ 每题稳定性(过/跑):
+      t01  0/3
+      t02  0/3
+      t03  0/3
+      t04  0/3
+      t05  0/3
+      t06  0/3
+      t07  0/3
+      t08  0/3
+      t09  0/3
+      t10  0/3
+      t11  0/3
+      t12  0/3
+
+【指标 3】七环失败分布
+--------------------------------------------------------------
+  环1 不调用工具          0  
+  环2 调用格式错         36  ████████████████████████ ←
+  环3 选错工具或参数        0  
+  环4 工具返回错误         0  
+  环5 结果没用上          0  
+  环6 循环不收敛          0  
+  环7 上下文溢出          0  
+--------------------------------------------------------------
+  主瓶颈:环2 · 调用格式错
+    症状:裸文本、畸形 XML、缺字段;或 </think> 后的调用被解析器吞掉
+    修法:换模型 / 关 thinking 对照
+
+下一步:走 docs/05-eval-plan.md 的决策树,结论写进 notes/findings.md
