@@ -235,6 +235,8 @@ def main() -> None:
     ap.add_argument("--builtin", default="developer",
                     help="挂哪些 builtin extension,逗号分隔")
     ap.add_argument("--system", default="", help="附加 system 指令(做提示工程实验时用)")
+    ap.add_argument("--env", action="append", default=[], metavar="KEY=VAL",
+                    help="传给 goose 的环境变量,可重复。例:--env GOOSE_TOOLSHIM=true。会记进 _meta.json")
     ap.add_argument("--tasks", default=str(ROOT / "evals" / "tasks.jsonl"))
     ap.add_argument("--repeat", type=int, default=3,
                     help="每题跑几遍 —— 要看的是稳定性,不是单次表现")
@@ -249,6 +251,13 @@ def main() -> None:
 
     only = {s.strip() for s in args.only.split(",") if s.strip()} or None
     tasks = load_tasks(Path(args.tasks), only)
+    extra_env = {}
+    for kv in args.env:
+        if "=" not in kv:
+            sys.exit(f"--env 格式应为 KEY=VAL: {kv}")
+        k, v = kv.split("=", 1)
+        extra_env[k] = v
+        os.environ[k] = v
 
     stamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
     outdir = Path(args.outdir) if args.outdir else ROOT / "runs" / stamp
@@ -263,6 +272,7 @@ def main() -> None:
         "model": args.model,
         "builtin": args.builtin,
         "system": args.system,
+        "env": extra_env,
         "repeat": args.repeat,
         "timeout": args.timeout,
         "max_turns": args.max_turns,
@@ -312,7 +322,8 @@ def main() -> None:
                 "task": t,
                 "repeat": rep,
                 "cmd": cmd,
-                "cmd_str": " ".join(shlex.quote(c) for c in cmd),
+                "cmd_str": " ".join(f"{k}={shlex.quote(v)}" for k, v in extra_env.items())
+                           + (" " if extra_env else "") + " ".join(shlex.quote(c) for c in cmd),
                 "workdir": str(workdir),
                 "session_exported": session is not None,
                 "final_answer": answer,
