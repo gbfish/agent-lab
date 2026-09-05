@@ -58,4 +58,4 @@ Ring 2 (unescaped quotes in tool-call JSON, dropped by Ollama) is specific to qw
 - Change exactly one variable per run and record it in `--tag`.
 - Count only the *first* failing ring per run; downstream failures are collateral.
 - `runs/` is gitignored (session exports grow fast). Don't un-ignore it.
-- Explicitly out of scope right now: writing a custom agent loop, picking a framework, attaching business MCP servers (domain-mcp was removed from this plan on 2026-09-04), DeepSeek Harness (only as a later comparison), and buying hardware before the baseline table exists.
+- Explicitly out of scope right now: writing a custom agent loop, picking a framework, attaching business/domain MCP servers (removed from this plan on 2026-09-04), DeepSeek Harness (only as a later comparison), and buying hardware before the baseline table exists.

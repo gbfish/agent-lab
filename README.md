@@ -1,5 +1,29 @@
 # agent-lab
 
+> **English summary.** An experiment bench, not a product. It answers one question with data:
+> *where does the chain **local Ollama model → Goose CLI → Goose's built-in `developer` extension**
+> break when asked to run a real agent loop* (read files, run commands, edit files, look at the result,
+> decide the next step)? Every conclusion is traceable to raw trajectories under `runs/`.
+>
+> **Results so far (12 tasks × 3 runs each, Apple M3 Pro 18 GB):**
+>
+> | Configuration | Tool-call format | Task pass | Mean time | Dominant failure |
+> |---|---|---|---|---|
+> | `qwen3:14b` (16k ctx) baseline | 83% | 81% | 107 s | Unescaped quotes inside JSON strings → Ollama silently drops the call |
+> | `qwen3:14b` + Goose toolshim (`mistral-nemo` interpreter) | 97% | **94%** | **324 s** | Interpreter thrashes; both models exceed GPU budget, 3× slower |
+> | `qwen2.5-coder:14b` | **0%** | 0% | 5 s | Emits tool calls as plain-text JSON; never parsed |
+> | `qwen3:8b` (32k ctx) | **100%** | 86% | **79 s** | Reasoning errors only: wrong paths, treats `(no output)` as failure, edits code that wasn't broken |
+>
+> **Takeaways.** The 14b format failure is a quirk of that specific weight, not "small models can't call tools" —
+> the 8b never dropped a call. The remaining failures are prompt and tool-output design problems that a 70B
+> model would most likely share. **Buying bigger hardware is not justified by any of the four data points.**
+> Current best configuration: `qwen3:8b-32k`, bare. Full write-ups in [`notes/findings.md`](notes/findings.md)
+> (Chinese); the failure taxonomy ("seven rings") is [`docs/04-failure-modes.md`](docs/04-failure-modes.md).
+>
+> Docs and notes are written in Chinese. The task set (`evals/tasks.jsonl`) and scripts are language-neutral.
+
+---
+
 **这是实验台,不是产品。**
 
 目的:在决定任何架构、模型或硬件之前,先用数据搞清楚一件事——
@@ -14,11 +38,33 @@
 
 | 项 | 值 |
 |---|---|
-| 阶段 | Phase 0 — 尚未跑通基线 |
+| 阶段 | **基线 + 三组对照已完成**(2026-09-05)。下一个变量:`--system` 提示 |
 | Harness | Goose CLI(AAIF / Linux Foundation,v1.49) |
-| 模型 | Ollama 本地。本机 M3 Pro 18GB:`qwen3:8b` 已装,`qwen3:14b` 是这台机器的上限 |
+| 模型 | Ollama 本地。本机 M3 Pro 18GB:`qwen3:14b` 只能配 16k 上下文;`qwen3:8b` 可配 32k |
 | 工具 | Goose 内置 `developer` extension(shell + 文件读写),跑在每次运行独立的沙箱工作目录里 |
-| 待回答的问题 | 工具调用正确率是多少?任务完成率是多少?失败集中在第几环? |
+| 当前最佳配置 | **`qwen3:8b-32k` 裸跑**:格式 100%、完成 86%、79s/次 |
+| 已回答的问题 | 环 2(JSON 引号未转义)是 qwen3:14b 独有怪癖;剩余失败全是推理质量(环 3/5);**硬件升级无数据支持** |
+| 待回答的问题 | 提示词能否收回 8b 的路径/`(no output)`/盲改三类失败?toolshim 换小解释器能否不换入换出? |
+
+详细数字见下方「结果」,推理过程见 `notes/findings.md`。
+
+---
+
+## 结果(截至 2026-09-05)
+
+12 题 × 3 次,同一版 `analyze.py` 重算。每组只改一个变量。
+
+| | 工具调用格式 | 任务完成 | 平均耗时 | 平均调用 | 主要失败 |
+|---|---|---|---|---|---|
+| 基线 `qwen3:14b-16k` | 83.3% (30/36) | 80.6% (29/36) | 107s | 1.9 | 环 2 ×6:JSON 字符串里引号没转义,被 Ollama 静默丢弃 |
+| A `qwen3:14b` + toolshim | 97.2% (35/36) | **94.4% (34/36)** | **324s** | 5.1 | 解释器 27 次运行里解析失败 83 次,靠重试扛过去;两个模型超 GPU 预算,每轮换入换出 |
+| B `qwen2.5-coder:14b` | **0%** (0/36) | 0% | 5s | 0.0 | 把调用当纯文本 JSON 吐,Ollama 不解析,一轮就结束 |
+| C `qwen3:8b-32k` | **100%** (36/36) | 86.1% (31/36) | **79s** | 2.1 | 环 3/5:路径写错、把 `(no output)` 当失败、前提错误盲改 |
+
+**三个结论:**
+1. **环 2 是 qwen3:14b 这个权重的怪癖,不是「模型小所以不会调工具」**——8b 一次调用都没被吞。反推:更大的模型未必更好。
+2. **剩下的失败是「想错了」,不是「说不出来」**:误读 `(no output)`、盲从错误前提、路径推理错。这些是提示词和工具输出设计的问题,70B 大概率一样会犯。
+3. **硬件:别买。** 四组数据没有一组指向「模型能力不够」。
 
 ---
 
@@ -79,5 +125,5 @@ notes/      每次测完的结论,按日期追加
 
 - ❌ 不自己写 agent 循环(那 150 行留到搞懂之后,见 `docs/02-landscape.md`)
 - ❌ 不选 framework(现在选是照评测表选,三个月后会换)
-- ❌ 不接业务 MCP(domain-mcp 之类等基础链路跑稳了再说)
+- ❌ 不接业务 MCP(领域检索之类,等基础链路跑稳了再说)
 - ❌ 不买硬件(先拿到数字,见 `docs/06-hardware.md`)
